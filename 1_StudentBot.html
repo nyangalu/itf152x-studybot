@@ -1,0 +1,351 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>StudyBot · ITF152X</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:#f0ede8;min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem}
+#shell{background:#fff;border-radius:14px;width:100%;max-width:560px;height:92vh;max-height:700px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 4px 28px rgba(0,0,0,.10);border:0.5px solid rgba(0,0,0,.08)}
+/* header */
+#hdr{display:flex;align-items:center;gap:10px;padding:12px 16px;border-bottom:0.5px solid #e8e6e0;flex-shrink:0}
+#hdr .ico{width:36px;height:36px;border-radius:50%;background:#e1f5ee;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+#hdr .info{flex:1}
+#hdr .info p{margin:0}
+#hdr .info .title{font-weight:600;font-size:14px}
+#hdr .info .sub{font-size:12px;color:#888}
+.badge{display:inline-block;padding:2px 8px;border-radius:6px;font-size:11px;font-weight:500;margin-left:4px}
+/* screens */
+.screen{display:none;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:1.25rem;padding:2rem;text-align:center}
+.screen.active{display:flex}
+.screen h2{font-size:20px;font-weight:600}
+.screen p.sub{font-size:14px;color:#666}
+input.field{width:100%;max-width:280px;padding:10px 14px;border-radius:8px;border:0.5px solid #ccc;font-size:15px;outline:none;font-family:inherit;transition:border .15s}
+input.field:focus{border-color:#185fa5}
+button.btn{padding:11px 24px;border-radius:8px;border:none;font-size:14px;font-family:inherit;cursor:pointer;transition:opacity .15s}
+button.btn:disabled{opacity:.4;cursor:not-allowed}
+button.btn.primary{background:#e1f5ee;color:#0f6e56;font-weight:600}
+button.btn.primary:hover:not(:disabled){opacity:.82}
+/* chat area */
+#chat-wrap{flex:1;overflow-y:auto;padding:14px 16px;display:flex;flex-direction:column;gap:10px}
+.msg{display:flex}
+.msg.bot{justify-content:flex-start}
+.msg.user{justify-content:flex-end}
+.bubble{max-width:82%;padding:9px 13px;font-size:14px;line-height:1.6}
+.msg.bot .bubble{background:#f3f2ef;border-radius:16px 16px 16px 3px;color:#1a1a18}
+.msg.user .bubble{background:#e1f5ee;border-radius:16px 16px 3px 16px;color:#0f4f3a}
+#input-bar{display:flex;gap:8px;padding:10px 14px;border-top:0.5px solid #e8e6e0;flex-shrink:0}
+#input-bar input{flex:1;padding:9px 13px;border-radius:8px;border:0.5px solid #ccc;font-size:14px;font-family:inherit;outline:none}
+#input-bar input:focus{border-color:#185fa5}
+#input-bar button{padding:9px 18px;border-radius:8px;border:none;background:#e1f5ee;color:#0f6e56;font-weight:600;font-size:14px;cursor:pointer;font-family:inherit;flex-shrink:0}
+#input-bar button:disabled{opacity:.4;cursor:not-allowed}
+#badges{display:flex;gap:6px;flex-wrap:wrap}
+</style>
+</head>
+<body>
+<div id="shell">
+
+  <!-- HEADER -->
+  <div id="hdr">
+    <div class="ico">🎓</div>
+    <div class="info">
+      <p class="title">StudyBot · ITF152X</p>
+      <p class="sub" id="hdr-sub">Classroom Support · L Nyanga</p>
+    </div>
+    <div id="badges"></div>
+  </div>
+
+  <!-- SCREEN 1: welcome -->
+  <div class="screen active" id="s-welcome">
+    <div style="width:72px;height:72px;border-radius:50%;background:#e1f5ee;display:flex;align-items:center;justify-content:center;font-size:34px">🎓</div>
+    <div>
+      <h2>StudyBot</h2>
+      <p class="sub" style="margin-top:4px">ITF152X · First Year IT</p>
+      <p class="sub">Lecturer: L Nyanga</p>
+    </div>
+    <button class="btn primary" style="font-size:15px;padding:13px 28px" onclick="checkSetup()">Start Chatting →</button>
+  </div>
+
+  <!-- SCREEN 1b: API key setup (shown only if no key stored) -->
+  <div class="screen" id="s-setup">
+    <div style="width:64px;height:64px;border-radius:50%;background:#fff3e0;display:flex;align-items:center;justify-content:center;font-size:30px">🔑</div>
+    <div>
+      <h2>One-time Setup</h2>
+      <p class="sub" style="margin-top:4px">Enter the Anthropic API key to activate the bot.</p>
+      <p class="sub" style="margin-top:2px;font-size:12px;color:#aaa">This is saved on this device only. Students will not see this screen again.</p>
+    </div>
+    <input class="field" id="apikey-input" type="password" placeholder="sk-ant-..."
+           style="max-width:320px;letter-spacing:1px"
+           onkeydown="if(event.key==='Enter') saveApiKey()"/>
+    <div id="apikey-err" style="color:#e24b4a;font-size:13px;display:none">Please enter a valid API key (starts with sk-ant-)</div>
+    <button class="btn primary" style="font-size:15px;padding:12px 28px" onclick="saveApiKey()">Save &amp; Continue →</button>
+  </div>
+
+  <!-- SCREEN 2: name entry -->
+  <div class="screen" id="s-name">
+    <h2>Let's get started</h2>
+    <p class="sub">Please enter your details below</p>
+    <input class="field" id="name-input" placeholder="Your full name"
+           onkeydown="if(event.key==='Enter') document.getElementById('studnum-input').focus()"/>
+    <input class="field" id="studnum-input" placeholder="Student number (e.g. 12345678)"
+           onkeydown="if(event.key==='Enter') startChat()"/>
+    <button class="btn primary" id="begin-btn" onclick="startChat()">Begin →</button>
+  </div>
+
+  <!-- SCREEN 3: chat -->
+  <div class="screen" id="s-chat" style="padding:0;gap:0;justify-content:flex-start;align-items:stretch">
+    <div id="chat-wrap"></div>
+    <div id="input-bar">
+      <input id="msg-input" placeholder="Ask me anything about ITF152X…"
+             onkeydown="if(event.key==='Enter') sendMsg()"/>
+      <button id="send-btn" onclick="sendMsg()">Send</button>
+    </div>
+  </div>
+
+</div><!-- end #shell -->
+
+<script>
+/* ────────────────────────────────────────────────
+   ITF152X StudyBot  ·  paste your API key below
+   ──────────────────────────────────────────────── */
+var API_KEY = localStorage.getItem("itf_api_key") || "";
+
+var SYSTEM = "You are StudyBot, a classroom support assistant for ITF152X (First Year Information Technology) at a South African university. Lecturer: L Nyanga.\n\nSTRICT RULES:\n1. Reply in 50 words or FEWER - hard limit.\n2. NEVER give direct answers to assignments or workbook questions - guide only.\n3. Socratic method: ask one guiding question to move the student forward.\n4. Praise only when student gets it right.\n5. End every reply with a guiding question.\n6. If unsure: say 'I am not sure. Please book an appointment with L Nyanga or the demi.'\n7. If student writes in Xhosa or another language, reply in that language.\n8. Be warm, patient, encouraging.\n\nCONTEXT:\n- Many students have never used a computer before.\n- Tools: Microsoft 365 (Word, Excel, PowerPoint), Python, EduBlocks.\n- Some use older MS Office or smartphones.\n- Topics: mouse and keyboard basics, file management, Word, Excel formulas and cells, PowerPoint, Python/EduBlocks, internet and email.\n- Explain computer operations step by step, describing exactly what the student will see on screen.";
+
+var ANALYSIS_SYS = "You are an analytics classifier. Return ONLY valid JSON, no markdown, no extra text.";
+
+/* ── state (avoid reserved names like 'history') ── */
+var studentName  = "";
+var studentNum   = "";
+var sessionId    = "";
+var chatHistory  = [];   /* renamed from 'history' to avoid window.history conflict */
+var engagements  = 0;
+var curSentiment = "neutral";
+var curLearning  = "neutral";
+
+var SCOL = {positive:"#1d9e75", neutral:"#888", negative:"#d85a30", inappropriate:"#e24b4a"};
+var LCOL = {curious:"#1d9e75",  neutral:"#888", confused:"#ef9f27", "attention needed":"#e24b4a"};
+
+/* check if API key is already stored, else show setup */
+function checkSetup() {
+  var key = localStorage.getItem("itf_api_key") || "";
+  if (key && key.length > 10) {
+    API_KEY = key;
+    goTo('s-name');
+  } else {
+    goTo('s-setup');
+  }
+}
+
+/* save API key entered on setup screen */
+function saveApiKey() {
+  var inp = document.getElementById('apikey-input');
+  var err = document.getElementById('apikey-err');
+  var val = inp.value.trim();
+  if (!val || val.length < 10) {
+    err.style.display = "block";
+    inp.focus();
+    return;
+  }
+  err.style.display = "none";
+  localStorage.setItem("itf_api_key", val);
+  API_KEY = val;
+  goTo('s-name');
+}
+
+/* switch visible screen */
+function goTo(id) {
+  var screens = document.querySelectorAll('.screen');
+  for (var i = 0; i < screens.length; i++) {
+    screens[i].classList.remove('active');
+  }
+  document.getElementById(id).classList.add('active');
+}
+
+/* called when student clicks Begin */
+function startChat() {
+  var nameEl  = document.getElementById('name-input');
+  var numEl   = document.getElementById('studnum-input');
+  var n  = nameEl.value.trim();
+  var sn = numEl.value.trim();
+  if (!n)  { nameEl.style.borderColor="#e24b4a"; nameEl.focus(); return; }
+  if (!sn) { numEl.style.borderColor="#e24b4a";  numEl.focus();  return; }
+  nameEl.style.borderColor = "";
+  numEl.style.borderColor  = "";
+  studentName = n;
+  studentNum  = sn;
+  sessionId   = Date.now().toString(36) + Math.random().toString(36).slice(2, 6);
+  chatHistory = [];
+  engagements = 0;
+
+  document.getElementById('hdr-sub').textContent = n + " · " + sn;
+  goTo('s-chat');
+
+  var greeting = "Hi " + n + "! \uD83D\uDC4B I\u2019m StudyBot for ITF152X. What topic are you working on today?";
+  addBubble("bot", greeting);
+  document.getElementById('msg-input').focus();
+  saveSession();
+}
+
+/* add a chat bubble to the conversation */
+function addBubble(role, text) {
+  var wrap = document.getElementById('chat-wrap');
+  var row  = document.createElement('div');
+  row.className = 'msg ' + role;
+  var bbl = document.createElement('div');
+  bbl.className = 'bubble';
+  bbl.textContent = text;
+  row.appendChild(bbl);
+  wrap.appendChild(row);
+  wrap.scrollTop = wrap.scrollHeight;
+  return row;
+}
+
+/* send message to API */
+function sendMsg() {
+  var inp  = document.getElementById('msg-input');
+  var btn  = document.getElementById('send-btn');
+  var text = inp.value.trim();
+  if (!text) return;
+
+  inp.value    = "";
+  btn.disabled = true;
+  engagements++;
+
+  addBubble("user", text);
+  chatHistory.push({ role: "user", content: text });
+
+  var typingRow = addBubble("bot", "StudyBot is thinking\u2026");
+  typingRow.querySelector('.bubble').style.color = "#aaa";
+  typingRow.querySelector('.bubble').style.fontStyle = "italic";
+
+  /* build messages array for API */
+  var apiMessages = chatHistory.map(function(m) {
+    return { role: m.role, content: m.content };
+  });
+
+  fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": API_KEY,
+      "anthropic-version": "2023-06-01",
+      "anthropic-dangerous-direct-browser-access": "true"
+    },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 350,
+      system: SYSTEM,
+      messages: apiMessages
+    })
+  })
+  .then(function(res) { return res.json(); })
+  .then(function(data) {
+    var reply = "Sorry, I could not connect. Please check the API key.";
+    if (data.content && data.content.length > 0) {
+      reply = data.content.map(function(b) { return b.text || ""; }).join("");
+    }
+    var bbl = typingRow.querySelector('.bubble');
+    bbl.textContent  = reply;
+    bbl.style.color  = "";
+    bbl.style.fontStyle = "";
+    chatHistory.push({ role: "assistant", content: reply });
+    btn.disabled = false;
+    saveSession();
+    analyzeChat();
+  })
+  .catch(function() {
+    var bbl = typingRow.querySelector('.bubble');
+    bbl.textContent = "Connection error. Please check the API key in the HTML file and try again.";
+    bbl.style.color = "#c00";
+    bbl.style.fontStyle = "";
+    btn.disabled = false;
+  });
+}
+
+/* run sentiment/learning analysis silently */
+function analyzeChat() {
+  if (chatHistory.length < 2) return;
+  var snippet = chatHistory.slice(-6).map(function(m) {
+    return (m.role === "user" ? studentName : "Bot") + ": " + m.content;
+  }).join("\n");
+  var prompt = "Student: " + studentName + "\n---\n" + snippet + "\n---\nReturn JSON: {\"sentiment\":\"positive|neutral|negative|inappropriate\",\"learning\":\"curious|neutral|confused|attention needed\",\"note\":\"one sentence\"}";
+
+  fetch("https://api.anthropic.com/v1/messages", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "x-api-key": API_KEY,
+      "anthropic-version": "2023-06-01",
+      "anthropic-dangerous-direct-browser-access": "true"
+    },
+    body: JSON.stringify({
+      model: "claude-sonnet-4-20250514",
+      max_tokens: 150,
+      system: ANALYSIS_SYS,
+      messages: [{ role: "user", content: prompt }]
+    })
+  })
+  .then(function(r) { return r.json(); })
+  .then(function(d) {
+    var raw = d.content ? d.content.map(function(b){ return b.text||""; }).join("") : "{}";
+    var obj = JSON.parse(raw.replace(/```json|```/g, "").trim());
+    curSentiment = obj.sentiment || "neutral";
+    curLearning  = obj.learning  || "neutral";
+    updateBadges();
+
+    if (curSentiment === "inappropriate" || curLearning === "attention needed") {
+      var alertObj = {
+        studentName: studentName,
+        type: curSentiment === "inappropriate" ? "Inappropriate behaviour" : "Attention needed",
+        note: obj.note || "",
+        timestamp: new Date().toISOString()
+      };
+      try {
+        var sessions = JSON.parse(localStorage.getItem("itf_sessions") || "{}");
+        if (!sessions[sessionId]) sessions[sessionId] = buildSession();
+        if (!sessions[sessionId].alerts) sessions[sessionId].alerts = [];
+        sessions[sessionId].alerts.push(alertObj);
+        localStorage.setItem("itf_sessions", JSON.stringify(sessions));
+      } catch(e) { /* localStorage unavailable */ }
+      console.warn("LECTURER ALERT:", alertObj);
+    }
+    saveSession();
+  })
+  .catch(function() { /* silent — analysis is non-critical */ });
+}
+
+function updateBadges() {
+  var sc = SCOL[curSentiment] || "#888";
+  var lc = LCOL[curLearning]  || "#888";
+  document.getElementById('badges').innerHTML =
+    '<span class="badge" style="background:' + sc + '22;color:' + sc + '">' + curSentiment + '</span>' +
+    '<span class="badge" style="background:' + lc + '22;color:' + lc + '">' + curLearning  + '</span>';
+}
+
+function buildSession() {
+  return {
+    id: sessionId,
+    name: studentName,
+    studentNum: studentNum,
+    engagements: engagements,
+    sentiment: curSentiment,
+    learning:  curLearning,
+    alerts: [],
+    messages: chatHistory.map(function(m){ return { role: m.role, content: m.content }; }),
+    startedAt: new Date().toISOString()
+  };
+}
+
+function saveSession() {
+  if (!sessionId) return;
+  try {
+    var sessions = JSON.parse(localStorage.getItem("itf_sessions") || "{}");
+    sessions[sessionId] = buildSession();
+    localStorage.setItem("itf_sessions", JSON.stringify(sessions));
+  } catch(e) { /* localStorage unavailable — session won't persist */ }
+}
+</script>
+</body>
+</html>

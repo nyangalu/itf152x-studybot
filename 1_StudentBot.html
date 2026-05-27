@@ -1,0 +1,516 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>ITF152X Study Assistant</title>
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@tabler/icons-webfont@3.10.0/dist/tabler-icons.min.css"/>
+<style>
+:root{
+  --navy:#0D2B45;
+  --green:#0f6e56;
+  --green-lt:#e1f5ee;
+  --gold:#C8973A;
+  --bg:#F5F3EF;
+  --white:#fff;
+  --border:#E0DDD8;
+  --text:#1A1A18;
+  --muted:#6B6962;
+  --radius:12px;
+}
+*{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Segoe UI',system-ui,sans-serif;background:var(--bg);min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem}
+
+/* ── SHELL ── */
+#shell{background:var(--white);border-radius:16px;width:100%;max-width:580px;height:94vh;max-height:740px;display:flex;flex-direction:column;overflow:hidden;box-shadow:0 6px 36px rgba(0,0,0,.12);border:.5px solid var(--border)}
+
+/* ── HEADER ── */
+#hdr{background:var(--navy);padding:12px 16px;display:flex;align-items:center;gap:10px;flex-shrink:0}
+#hdr .logo{width:38px;height:38px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;flex-shrink:0}
+#hdr .logo i{font-size:18px;color:var(--navy)}
+#hdr .info{flex:1}
+#hdr .info .title{font-weight:700;font-size:14px;color:#fff}
+#hdr .info .sub{font-size:11px;color:rgba(255,255,255,.65);margin-top:1px}
+#badges{display:flex;gap:5px;flex-wrap:wrap;justify-content:flex-end}
+.badge{display:inline-block;padding:2px 7px;border-radius:20px;font-size:10px;font-weight:600}
+#api-reset-link{font-size:10px;color:rgba(255,255,255,.45);cursor:pointer;text-decoration:none;display:block;margin-top:2px}
+#api-reset-link:hover{color:rgba(255,255,255,.8)}
+
+/* ── SCREENS ── */
+.screen{display:none;flex-direction:column;align-items:center;justify-content:center;flex:1;gap:1.25rem;padding:2rem;text-align:center;overflow-y:auto}
+.screen.active{display:flex}
+
+/* ── SETUP SCREEN ── */
+.setup-icon{width:68px;height:68px;border-radius:50%;background:#fff3e0;display:flex;align-items:center;justify-content:center;font-size:28px}
+h2{font-size:20px;font-weight:700;color:var(--text)}
+p.sub{font-size:14px;color:var(--muted);line-height:1.5}
+
+/* ── FORM ELEMENTS ── */
+.field-wrap{width:100%;max-width:320px;text-align:left}
+.field-label{font-size:12px;font-weight:600;color:var(--muted);margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
+input.field{width:100%;padding:10px 14px;border-radius:8px;border:.5px solid var(--border);font-size:14px;outline:none;font-family:inherit;color:var(--text);background:var(--white);transition:border .15s}
+input.field:focus{border-color:var(--green)}
+input.field.err{border-color:#e24b4a}
+input.field[type=password]{letter-spacing:2px}
+.err-msg{font-size:12px;color:#e24b4a;margin-top:3px;display:none}
+
+/* ── BUTTONS ── */
+button.btn{padding:11px 24px;border-radius:8px;border:none;font-size:14px;font-family:inherit;cursor:pointer;transition:opacity .15s;font-weight:600}
+button.btn.primary{background:var(--green);color:#fff}
+button.btn.primary:hover:not(:disabled){opacity:.85}
+button.btn:disabled{opacity:.4;cursor:not-allowed}
+button.btn.ghost{background:var(--bg);color:var(--text);border:.5px solid var(--border)}
+button.btn.ghost:hover{background:var(--border)}
+
+/* ── TOPIC BUTTONS ── */
+#topic-bar{display:flex;flex-wrap:wrap;gap:6px;padding:10px 14px;border-bottom:.5px solid var(--border);background:#fafaf8;flex-shrink:0}
+.tb{padding:5px 11px;border-radius:20px;border:.5px solid var(--border);background:var(--white);font-size:12px;font-weight:500;cursor:pointer;font-family:inherit;color:var(--muted);transition:all .15s}
+.tb:hover{border-color:var(--green);color:var(--green)}
+.tb.on{background:var(--green);color:#fff;border-color:var(--green)}
+
+/* ── STUDENT INFO BAR ── */
+#sbar{padding:7px 14px;background:#f0f8f5;border-bottom:.5px solid var(--border);font-size:12px;color:var(--green);display:none;align-items:center;gap:6px;flex-shrink:0}
+
+/* ── CHAT ── */
+#chat-screen{padding:0;gap:0;justify-content:flex-start;align-items:stretch}
+#msgs{flex:1;overflow-y:auto;padding:14px 14px;display:flex;flex-direction:column;gap:10px}
+.msg{display:flex;align-items:flex-end;gap:7px}
+.msg.u{justify-content:flex-end}
+.msg.b{justify-content:flex-start}
+.av{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;flex-shrink:0}
+.msg.b .av{background:var(--navy)}
+.msg.u .av{background:var(--green-lt)}
+.bub{max-width:80%;padding:9px 13px;font-size:13.5px;line-height:1.65;border-radius:16px}
+.msg.b .bub{background:#F3F2EF;border-radius:16px 16px 16px 3px;color:var(--text)}
+.msg.u .bub{background:var(--navy);border-radius:16px 16px 3px 16px;color:#fff}
+.topic-tag{font-size:10px;font-weight:600;text-transform:uppercase;letter-spacing:.6px;margin-bottom:3px;opacity:.7}
+
+/* ── INPUT BAR ── */
+#input-bar{display:flex;gap:8px;padding:10px 14px;border-top:.5px solid var(--border);flex-shrink:0;background:var(--white)}
+#inp{flex:1;padding:9px 13px;border-radius:8px;border:.5px solid var(--border);font-size:14px;font-family:inherit;outline:none;resize:none;max-height:80px;overflow-y:auto;line-height:1.5}
+#inp:focus{border-color:var(--green)}
+#send-btn{padding:9px 16px;border-radius:8px;border:none;background:var(--green);color:#fff;font-size:14px;cursor:pointer;font-family:inherit;font-weight:600;flex-shrink:0}
+#send-btn:disabled{opacity:.4;cursor:not-allowed}
+
+/* ── CONSENT ── */
+.consent-box{display:flex;align-items:flex-start;gap:8px;text-align:left;max-width:320px;background:#f8f7f4;border-radius:8px;padding:10px 12px;border:.5px solid var(--border)}
+.consent-box input{margin-top:2px;flex-shrink:0;accent-color:var(--green);width:15px;height:15px}
+.consent-box label{font-size:12px;color:var(--muted);line-height:1.5}
+</style>
+</head>
+<body>
+<div id="shell">
+
+  <!-- ── HEADER ── -->
+  <div id="hdr">
+    <div class="logo"><i class="ti ti-school"></i></div>
+    <div class="info">
+      <div class="title">ITF152X Study Assistant</div>
+      <div class="sub" id="hdr-sub">First Year IT · CPUT · L Nyanga</div>
+      <a id="api-reset-link" style="display:none" onclick="resetKey();return false">🔑 Change API key</a>
+    </div>
+    <div id="badges"></div>
+  </div>
+
+  <!-- ── STUDENT INFO BAR ── -->
+  <div id="sbar">
+    <i class="ti ti-user" style="font-size:13px"></i>
+    <span id="sbar-text"></span>
+  </div>
+
+  <!-- ── TOPIC BAR (hidden until chat) ── -->
+  <div id="topic-bar" style="display:none">
+    <span style="font-size:11px;font-weight:600;color:var(--muted);align-self:center;margin-right:2px">Topic:</span>
+    <button class="tb on" onclick="setTopic('General',this)">General</button>
+    <button class="tb" onclick="setTopic('MS Word',this)">MS Word</button>
+    <button class="tb" onclick="setTopic('MS Excel',this)">MS Excel</button>
+    <button class="tb" onclick="setTopic('MS PowerPoint',this)">PowerPoint</button>
+    <button class="tb" onclick="setTopic('Python',this)">Python</button>
+    <button class="tb" onclick="setTopic('EduBlocks',this)">EduBlocks</button>
+    <button class="tb" onclick="setTopic('File Management',this)">Files</button>
+    <button class="tb" onclick="setTopic('Internet & Email',this)">Internet</button>
+    <button class="tb" onclick="setTopic('Computer Basics',this)">Computer Basics</button>
+  </div>
+
+  <!-- ── SCREEN: API KEY SETUP ── -->
+  <div class="screen active" id="s-setup">
+    <div class="setup-icon">🔑</div>
+    <div>
+      <h2>One-time Setup</h2>
+      <p class="sub">Enter the Anthropic API key to activate the bot.<br><span style="font-size:12px;color:#aaa">Saved on this device only. Students won't see this again.</span></p>
+    </div>
+    <div class="field-wrap">
+      <div class="field-label">API Key</div>
+      <input class="field" id="apikey-input" type="password" placeholder="sk-ant-api03-..." 
+             onkeydown="if(event.key==='Enter') saveApiKey()"/>
+      <div class="err-msg" id="apikey-err">Please enter a valid API key</div>
+    </div>
+    <button class="btn primary" style="min-width:200px" onclick="saveApiKey()">Save &amp; Continue →</button>
+  </div>
+
+  <!-- ── SCREEN: WELCOME ── -->
+  <div class="screen" id="s-welcome">
+    <div style="width:72px;height:72px;border-radius:50%;background:var(--navy);display:flex;align-items:center;justify-content:center">
+      <i class="ti ti-school" style="font-size:32px;color:var(--gold)"></i>
+    </div>
+    <div>
+      <h2>ITF152X Study Assistant</h2>
+      <p class="sub" style="margin-top:6px">First Year Information Technology<br>CPUT · Lecturer: L Nyanga</p>
+    </div>
+    <p style="font-size:13px;color:var(--muted);max-width:280px;line-height:1.6">
+      I guide you through your work — I won't give you direct answers, but I'll help you think through every step. You can chat in <strong>any language</strong>.
+    </p>
+    <button class="btn primary" style="min-width:220px;padding:13px 28px;font-size:15px" onclick="goTo('s-register')">
+      <i class="ti ti-arrow-right" style="vertical-align:-2px;margin-right:4px"></i>Start Chatting
+    </button>
+  </div>
+
+  <!-- ── SCREEN: REGISTER ── -->
+  <div class="screen" id="s-register">
+    <div>
+      <h2>Let's get started</h2>
+      <p class="sub">Enter your details to begin your session</p>
+    </div>
+    <div class="field-wrap">
+      <div class="field-label">Full Name</div>
+      <input class="field" id="name-input" placeholder="e.g. Sipho Dlamini"
+             onkeydown="if(event.key==='Enter') document.getElementById('studnum-input').focus()"/>
+      <div class="err-msg" id="name-err">Please enter your full name</div>
+    </div>
+    <div class="field-wrap">
+      <div class="field-label">Student Number</div>
+      <input class="field" id="studnum-input" placeholder="e.g. 220012345"
+             onkeydown="if(event.key==='Enter') startChat()"/>
+      <div class="err-msg" id="num-err">Please enter your student number</div>
+    </div>
+    <div class="consent-box">
+      <input type="checkbox" id="consent-chk"/>
+      <label for="consent-chk">I understand that this bot guides me to find answers — it will not give me direct answers to assignments or workbook questions.</label>
+    </div>
+    <div class="err-msg" id="consent-err" style="display:none;text-align:center">Please tick the box to continue</div>
+    <div style="display:flex;gap:10px">
+      <button class="btn ghost" onclick="goTo('s-welcome')">← Back</button>
+      <button class="btn primary" style="min-width:140px" onclick="startChat()">
+        Begin <i class="ti ti-arrow-right" style="vertical-align:-2px;margin-left:2px"></i>
+      </button>
+    </div>
+  </div>
+
+  <!-- ── SCREEN: CHAT ── -->
+  <div class="screen" id="s-chat" style="padding:0;gap:0;justify-content:flex-start;align-items:stretch">
+    <div id="msgs"></div>
+    <div id="input-bar">
+      <textarea id="inp" rows="1" placeholder="Type your question here… (any language)"
+        onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();sendMsg()}"
+        oninput="this.style.height='34px';this.style.height=Math.min(this.scrollHeight,80)+'px'"></textarea>
+      <button id="send-btn" onclick="sendMsg()">
+        <i class="ti ti-send" style="vertical-align:-2px"></i>
+      </button>
+    </div>
+  </div>
+
+</div><!-- end #shell -->
+
+<script>
+/* ═══════════════════════════════════════════════
+   ITF152X Study Assistant · L Nyanga · CPUT
+   ═══════════════════════════════════════════════ */
+
+var API_KEY      = localStorage.getItem("itf_api_key") || "";
+var studentName  = "";
+var studentNum   = "";
+var sessionId    = "";
+var chatHistory  = [];
+var engagements  = 0;
+var curTopic     = "General";
+var curSentiment = "neutral";
+var curLearning  = "neutral";
+
+var SCOL = {positive:"#1d9e75", neutral:"#888", negative:"#d85a30", inappropriate:"#e24b4a"};
+var LCOL = {curious:"#1d9e75",  neutral:"#888", confused:"#ef9f27", "attention needed":"#e24b4a"};
+
+var TOPIC_COL = {
+  "MS Word":"#185FA5", "MS Excel":"#217346", "MS PowerPoint":"#C43E1C",
+  "Python":"#3572A5", "EduBlocks":"#9B59B6", "File Management":"#C8973A",
+  "Internet & Email":"#0078D7", "Computer Basics":"#6B6962", "General":"#0D2B45"
+};
+
+var SYSTEM = "You are the ITF152X Study Assistant at CPUT (Cape Peninsula University of Technology), South Africa.\nLecturer: L Nyanga.\nCourse: First Year Information Technology (ITF152X).\n\nNON-NEGOTIABLE RULES:\n1. Reply in 50 words or FEWER — hard limit. NEVER return an empty response.\n2. NEVER give direct answers to assignment or workbook questions — Socratic guiding only.\n3. Ask ONE guiding question per response to move the student forward.\n4. Only praise when the student is genuinely correct.\n5. Always end with exactly ONE guiding question.\n6. LANGUAGE: Detect the language of EVERY student message and respond ONLY in that exact language. Support ALL languages. NEVER mix languages. isiXhosa ≠ isiZulu. Afrikaans ≠ Dutch. Sesotho ≠ Setswana/Sepedi.\n7. GREETINGS: If a student greets you, greet back warmly, ask their topic, keep it to 50 words.\n8. If unsure: 'I am not sure. Please make an appointment with L Nyanga or the demi so they can explain the concept.'\n9. For computer operations, describe mouse actions clearly (left-click, right-click, cursor position) — most students are new to computers.\n10. Use precise technical vocabulary: cell reference, formula bar, ribbon, syntax, loop, variable, indentation, function, slide layout, paragraph style.\n\nCOURSE TOPICS: MS Word, MS Excel, MS PowerPoint, Python basics, EduBlocks, File Management, Internet & Email, Computer Basics (mouse, keyboard, desktop).\n\nSTUDENT CONTEXT: Many students have never used a computer before. Some use smartphones. Microsoft 365 is primary but some use older MS Office.";
+
+var ANALYSIS_SYS = "You are an analytics classifier. Return ONLY valid JSON, no markdown, no extra text.";
+
+/* ── navigation ── */
+function goTo(id) {
+  var screens = document.querySelectorAll('.screen');
+  for (var i = 0; i < screens.length; i++) screens[i].classList.remove('active');
+  document.getElementById(id).classList.add('active');
+}
+
+function checkSetup() {
+  if (API_KEY && API_KEY.length > 10) { goTo('s-welcome'); }
+  else { goTo('s-setup'); }
+}
+
+function saveApiKey() {
+  var inp = document.getElementById('apikey-input');
+  var err = document.getElementById('apikey-err');
+  var val = inp.value.trim();
+  if (!val || val.length < 10) { err.style.display = "block"; inp.focus(); return; }
+  err.style.display = "none";
+  localStorage.setItem("itf_api_key", val);
+  API_KEY = val;
+  goTo('s-welcome');
+}
+
+function resetKey() {
+  localStorage.removeItem("itf_api_key");
+  API_KEY = "";
+  document.getElementById('apikey-input').value = "";
+  document.getElementById('apikey-err').style.display = "none";
+  goTo('s-setup');
+}
+
+function setTopic(t, el) {
+  curTopic = t;
+  document.querySelectorAll('.tb').forEach(function(b){ b.classList.remove('on'); });
+  el.classList.add('on');
+}
+
+/* ── registration ── */
+function startChat() {
+  var nameEl    = document.getElementById('name-input');
+  var numEl     = document.getElementById('studnum-input');
+  var nameErr   = document.getElementById('name-err');
+  var numErr    = document.getElementById('num-err');
+  var consentEl = document.getElementById('consent-chk');
+  var consentErr= document.getElementById('consent-err');
+
+  var n  = nameEl.value.trim();
+  var sn = numEl.value.trim();
+  var ok = true;
+
+  nameErr.style.display   = "none";
+  numErr.style.display    = "none";
+  consentErr.style.display= "none";
+  nameEl.classList.remove('err');
+  numEl.classList.remove('err');
+
+  if (!n)  { nameEl.classList.add('err');  nameErr.style.display="block";  ok=false; }
+  if (!sn) { numEl.classList.add('err');   numErr.style.display="block";   ok=false; }
+  if (!consentEl.checked) { consentErr.style.display="block"; ok=false; }
+  if (!ok) return;
+
+  studentName = n;
+  studentNum  = sn;
+  sessionId   = Date.now().toString(36) + Math.random().toString(36).slice(2,6);
+  chatHistory = [];
+  engagements = 0;
+
+  /* update header */
+  document.getElementById('hdr-sub').textContent = n + " · " + sn;
+  document.getElementById('api-reset-link').style.display = "block";
+
+  /* show student info bar */
+  var sbar = document.getElementById('sbar');
+  sbar.style.display = "flex";
+  document.getElementById('sbar-text').innerHTML =
+    '<strong>' + esc(n) + '</strong> &nbsp;·&nbsp; ' + esc(sn);
+
+  /* show topic bar */
+  document.getElementById('topic-bar').style.display = "flex";
+
+  goTo('s-chat');
+  addBot('<strong>Welcome, ' + esc(n) + '!</strong> 👋 I\'m your ITF152X Study Assistant. Select a topic above and ask me anything — I\'m here to <em>guide</em> you, not just give you answers!<br><br>What topic are you working on today?', null);
+  document.getElementById('inp').focus();
+  saveSession();
+}
+
+/* ── chat messages ── */
+function addMsg(role, html, topic) {
+  var msgs = document.getElementById('msgs');
+  var row  = document.createElement('div');
+  row.className = 'msg ' + role;
+  var av = document.createElement('div');
+  av.className = 'av';
+  av.innerHTML = role === 'b'
+    ? '<i class="ti ti-school" style="font-size:12px;color:#C8973A"></i>'
+    : '<i class="ti ti-user" style="font-size:12px;color:#0f6e56"></i>';
+  var bub = document.createElement('div');
+  bub.className = 'bub';
+  if (topic && role === 'b') {
+    var tag = document.createElement('div');
+    tag.className = 'topic-tag';
+    tag.style.color = TOPIC_COL[topic] || '#888';
+    tag.textContent = topic;
+    bub.appendChild(tag);
+  }
+  var txt = document.createElement('div');
+  txt.innerHTML = html;
+  bub.appendChild(txt);
+  if (role === 'b') { row.appendChild(av); row.appendChild(bub); }
+  else              { row.appendChild(bub); row.appendChild(av); }
+  msgs.appendChild(row);
+  msgs.scrollTop = msgs.scrollHeight;
+}
+
+function addBot(html, topic)  { addMsg('b', html, topic || curTopic); }
+function addUser(text) { addMsg('u', text.replace(/</g,'&lt;').replace(/>/g,'&gt;'), null); }
+
+/* ── send message ── */
+function sendMsg() {
+  var inp  = document.getElementById('inp');
+  var btn  = document.getElementById('send-btn');
+  var text = inp.value.trim();
+  if (!text) return;
+  inp.value = ""; inp.style.height = "34px";
+  btn.disabled = true;
+  engagements++;
+
+  addUser(text);
+  chatHistory.push({ role:"user", content:"[Topic: "+curTopic+"] "+text });
+
+  /* typing indicator */
+  var msgs   = document.getElementById('msgs');
+  var typing = document.createElement('div');
+  typing.className = 'msg b';
+  typing.id = 'typing-indicator';
+  typing.innerHTML = '<div class="av"><i class="ti ti-school" style="font-size:12px;color:#C8973A"></i></div>' +
+    '<div class="bub" style="color:#aaa;font-style:italic;font-size:13px">Thinking…</div>';
+  msgs.appendChild(typing);
+  msgs.scrollTop = msgs.scrollHeight;
+
+  var apiMessages = chatHistory.map(function(m){ return { role:m.role, content:m.content }; });
+
+  fetch("https://api.anthropic.com/v1/messages", {
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json",
+      "x-api-key": API_KEY,
+      "anthropic-version":"2023-06-01",
+      "anthropic-dangerous-direct-browser-access":"true"
+    },
+    body: JSON.stringify({
+      model:"claude-haiku-4-5-20251001",
+      max_tokens:350,
+      system: SYSTEM,
+      messages: apiMessages
+    })
+  })
+  .then(function(res){ return res.json(); })
+  .then(function(data){
+    var typingEl = document.getElementById('typing-indicator');
+    if (typingEl) typingEl.remove();
+
+    if (data.error) {
+      addBot('<span style="color:#c00">Error: <strong>' + esc(data.error.message) + '</strong></span><br>' +
+        '<a href="#" onclick="resetKey();return false" style="color:#185fa5;font-size:12px">🔑 Re-enter API key</a>', null);
+      btn.disabled = false;
+      return;
+    }
+
+    var reply = "";
+    if (data.content && data.content.length > 0) {
+      reply = data.content.map(function(b){ return b.text||""; }).join("");
+    }
+    if (!reply) reply = "I didn't quite catch that — could you rephrase your question?";
+
+    addBot(reply.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\*(.*?)\*/g,'<em>$1</em>'), curTopic);
+    chatHistory.push({ role:"assistant", content:reply });
+    btn.disabled = false;
+    saveSession();
+    analyzeChat();
+  })
+  .catch(function(err){
+    var typingEl = document.getElementById('typing-indicator');
+    if (typingEl) typingEl.remove();
+    addBot('<span style="color:#c00">Connection error: <strong>' + (err.message||"network failure") + '</strong></span><br>' +
+      '<a href="#" onclick="resetKey();return false" style="color:#185fa5;font-size:12px">🔑 Re-enter API key</a>', null);
+    btn.disabled = false;
+  });
+}
+
+/* ── sentiment & learning analysis ── */
+function analyzeChat() {
+  if (chatHistory.length < 2) return;
+  var snippet = chatHistory.slice(-6).map(function(m){
+    return (m.role==="user" ? studentName : "Bot") + ": " + m.content;
+  }).join("\n");
+  var prompt = "Student: " + studentName + " (" + studentNum + ")\n---\n" + snippet +
+    "\n---\nReturn JSON: {\"sentiment\":\"positive|neutral|negative|inappropriate\",\"learning\":\"curious|neutral|confused|attention needed\",\"note\":\"one sentence summary\"}";
+
+  fetch("https://api.anthropic.com/v1/messages", {
+    method:"POST",
+    headers:{
+      "Content-Type":"application/json",
+      "x-api-key": API_KEY,
+      "anthropic-version":"2023-06-01",
+      "anthropic-dangerous-direct-browser-access":"true"
+    },
+    body: JSON.stringify({
+      model:"claude-haiku-4-5-20251001",
+      max_tokens:150,
+      system: ANALYSIS_SYS,
+      messages:[{ role:"user", content:prompt }]
+    })
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(d){
+    var raw = d.content ? d.content.map(function(b){ return b.text||""; }).join("") : "{}";
+    var obj = JSON.parse(raw.replace(/```json|```/g,"").trim());
+    curSentiment = obj.sentiment || "neutral";
+    curLearning  = obj.learning  || "neutral";
+    updateBadges();
+    if (curSentiment==="inappropriate" || curLearning==="attention needed") {
+      var alert = {
+        studentName:studentName, studentNum:studentNum,
+        type: curSentiment==="inappropriate" ? "Inappropriate behaviour" : "Attention needed",
+        note: obj.note||"", timestamp:new Date().toISOString()
+      };
+      try {
+        var sess = JSON.parse(localStorage.getItem("itf_sessions")||"{}");
+        if (!sess[sessionId]) sess[sessionId] = buildSession();
+        if (!sess[sessionId].alerts) sess[sessionId].alerts = [];
+        sess[sessionId].alerts.push(alert);
+        localStorage.setItem("itf_sessions", JSON.stringify(sess));
+      } catch(e){}
+      console.warn("LECTURER ALERT:", alert);
+    }
+    saveSession();
+  })
+  .catch(function(){ /* silent */ });
+}
+
+function updateBadges() {
+  var sc = SCOL[curSentiment]||"#888";
+  var lc = LCOL[curLearning]||"#888";
+  document.getElementById('badges').innerHTML =
+    '<span class="badge" style="background:'+sc+'33;color:'+sc+'">'+curSentiment+'</span>' +
+    '<span class="badge" style="background:'+lc+'33;color:'+lc+'">'+curLearning+'</span>';
+}
+
+function buildSession() {
+  return {
+    id:sessionId, name:studentName, studentNum:studentNum,
+    engagements:engagements, sentiment:curSentiment, learning:curLearning,
+    alerts:[], topic:curTopic,
+    messages:chatHistory.map(function(m){ return {role:m.role,content:m.content}; }),
+    startedAt:new Date().toISOString()
+  };
+}
+
+function saveSession() {
+  if (!sessionId) return;
+  try {
+    var sess = JSON.parse(localStorage.getItem("itf_sessions")||"{}");
+    sess[sessionId] = buildSession();
+    localStorage.setItem("itf_sessions", JSON.stringify(sess));
+  } catch(e){}
+}
+
+function esc(s){ var d=document.createElement('div'); d.textContent=s||""; return d.innerHTML; }
+
+/* ── init ── */
+checkSetup();
+</script>
+</body>
+</html>
